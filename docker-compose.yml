@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ultimate-agent:
+    build: .
+    container_name: ultimate_agent_v1
+    restart: unless-stopped
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - HEADLESS_MODE=true
+    volumes:
+      # Persist memory and database
+      - ./ultimate_agent_memory.json:/app/ultimate_agent_memory.json
+      - ./agent_db.sqlite:/app/agent_db.sqlite
+      - ./code_integrity_ledger.json:/app/code_integrity_ledger.json
+      - ./hive_mind_central.db:/app/hive_mind_central.db
+      # Persist self-modified code (Risky but necessary for evolution)
+      - ./:/app/
+    ports:
+      - "8001:8001"

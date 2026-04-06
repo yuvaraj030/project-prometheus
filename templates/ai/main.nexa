@@ -1,0 +1,48 @@
+// Nexa v25 — AI Project Template
+// Created by: nexa new my-ai-app --template ai
+
+import "automl"
+import "nlp"
+import "df"
+import "json"
+
+// ─── 1. Data Preparation ──────────────────────────────────────────────────────
+let raw_data = [
+    {"feature1": 1.0, "feature2": 2.0, "label": 0},
+    {"feature1": 1.5, "feature2": 3.0, "label": 0},
+    {"feature1": 5.0, "feature2": 4.5, "label": 1},
+    {"feature1": 6.0, "feature2": 5.0, "label": 1},
+]
+
+let dataset = df.create(raw_data)
+df.show(dataset)
+
+// ─── 2. Feature Extraction ────────────────────────────────────────────────────
+let X = [[row["feature1"], row["feature2"]] for row in raw_data]
+let y = [row["label"] for row in raw_data]
+
+// ─── 3. Model Definition ──────────────────────────────────────────────────────
+model Classifier {
+    layers: ["Dense(64)", "ReLU", "Dense(1)"]
+    optimizer: "adam"
+    loss: "binary_crossentropy"
+    task: "classification"
+}
+
+// ─── 4. Training ──────────────────────────────────────────────────────────────
+train Classifier on { X: X, y: y } { epochs: 20, batch: 4 }
+
+// ─── 5. Prediction ────────────────────────────────────────────────────────────
+let test_input = [[2.0, 3.0], [5.5, 4.8]]
+let predictions = predict Classifier(test_input)
+print(f"Predictions: {predictions}")
+
+// ─── 6. NLP Example ───────────────────────────────────────────────────────────
+let review = "This product is absolutely amazing and fantastic!"
+let sentiment = nlp.sentiment(review)
+print(f"Sentiment: {sentiment}")
+
+// ─── 7. AutoML ────────────────────────────────────────────────────────────────
+print("Running AutoML selection...")
+let best = automl.best_model(X, y, task="classification")
+print(f"Best model: {best}")

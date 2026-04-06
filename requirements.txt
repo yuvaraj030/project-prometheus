@@ -1,0 +1,63 @@
+# ============================================
+# Ultimate AI Agent - Dependencies
+# ============================================
+
+# --- Core ---
+requests>=2.31.0
+
+# --- Voice (optional — agent works in text-only mode without these) ---
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+# PyAudio — install separately: pip install pipwin && pipwin install pyaudio
+
+# --- Vector Memory (optional — keyword fallback is automatic) ---
+chromadb>=0.4.22
+# NOTE: sentence-transformers NOT needed — ChromaDB uses its own embeddings.
+#        sentence-transformers pulls in torch which breaks on Windows (MAX_PATH).
+
+# --- Database ---
+# sqlite3 is built-in to Python
+psycopg2-binary>=2.9.9
+pgvector>=0.2.4
+
+# --- Security & Auth ---
+# Required for Sovereign Security encryption
+cryptography>=41.0.0
+pydantic>=2.5.0
+rich>=13.7.0
+psutil>=5.9.0
+
+# --- AI Providers ---
+openai>=1.12.0
+anthropic>=0.17.0
+google-generativeai>=0.4.0
+
+# --- Vision & GUI Control (God Mode) ---
+pyautogui>=0.9.54
+Pillow>=10.0.0
+opencv-python-headless>=4.8.0
+
+# --- Phase 11: Digital Avatar ---
+# PyQt6 removed due to Windows MAX_PATH issues. Using native tkinter.
+
+# --- Gateway Server (OpenClaw-style) ---
+fastapi>=0.110.0
+uvicorn>=0.27.0
+httpx>=0.27.0
+
+# --- Advanced Features ---
+docker>=7.0.0
+web3>=6.15.0
+websockets>=12.0
+
+
+# --- Phase 16 � Optional (graceful fallback if not installed) ---
+ccxt>=4.2.0
+stripe>=8.0.0
+moviepy>=1.0.3
+elevenlabs>=1.0.0
+twilio>=8.0.0
+openai-whisper>=20231117
+feedparser>=6.0.10
+google-api-python-client>=2.120.0
+

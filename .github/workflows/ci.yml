@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+
+      - name: Run unit tests
+        env:
+          AGENT_PROVIDER: ollama
+          LOG_LEVEL: WARNING
+          AGENT_API_KEY: test-ci-key
+          JWT_SECRET: test-ci-jwt-secret
+        run: |
+          pytest tests/ -m "not integration and not slow" \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --ignore=tests/backups \
+            -q
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install linters
+        run: pip install ruff
+      - name: Ruff lint
+        run: ruff check . --select E,W,F --ignore E501 --exclude venv,__pycache__,cb-mpc

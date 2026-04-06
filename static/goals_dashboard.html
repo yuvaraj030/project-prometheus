@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎯 Autonomous Goal Dashboard — Ultimate AI Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --card: #161d2e;
+            --border: #1e293b;
+            --accent: #6c63ff;
+            --accent2: #22d3ee;
+            --accent3: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --glow: rgba(108, 99, 255, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(108, 99, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(108, 99, 255, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* ── Header ── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 28px;
+            background: linear-gradient(135deg, rgba(108, 99, 255, 0.15), rgba(34, 211, 238, 0.08));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 28px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-left h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header-left h1 span {
+            color: var(--accent);
+        }
+
+        .header-left p {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            border: 1px solid;
+            transition: all 0.3s;
+        }
+
+        .status-badge.connected {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        .status-badge.disconnected {
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        .connected .dot {
+            background: var(--success);
+        }
+
+        .disconnected .dot {
+            background: var(--danger);
+            animation: none;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.7)
+            }
+        }
+
+        /* ── Stats Grid ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--glow);
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-card.purple .stat-value {
+            color: var(--accent);
+        }
+
+        .stat-card.cyan .stat-value {
+            color: var(--accent2);
+        }
+
+        .stat-card.amber .stat-value {
+            color: var(--accent3);
+        }
+
+        .stat-card.green .stat-value {
+            color: var(--success);
+        }
+
+        /* ── Main Grid ── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Panel ── */
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(108, 99, 255, 0.06);
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* ── Goal Cards ── */
+        .goal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .goal-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.25s;
+            border-left: 3px solid transparent;
+        }
+
+        .goal-card:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .goal-card.cat-learning {
+            border-left-color: var(--accent);
+        }
+
+        .goal-card.cat-research {
+            border-left-color: var(--accent2);
+        }
+
+        .goal-card.cat-maintenance {
+            border-left-color: var(--success);
+        }
+
+        .goal-card.cat-finance {
+            border-left-color: var(--accent3);
+        }
+
+        .goal-card.cat-creative {
+            border-left-color: #f472b6;
+        }
+
+        .goal-card.cat-self_improvement {
+            border-left-color: #a78bfa;
+        }
+
+        .goal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .goal-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .goal-badge {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .badge-learning {
+            background: rgba(108, 99, 255, 0.15);
+            color: var(--accent);
+        }
+
+        .badge-research {
+            background: rgba(34, 211, 238, 0.15);
+            color: var(--accent2);
+        }
+
+        .badge-maintenance {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .badge-finance {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent3);
+        }
+
+        .badge-creative {
+            background: rgba(244, 114, 182, 0.15);
+            color: #f472b6;
+        }
+
+        .badge-self_improvement {
+            background: rgba(167, 139, 250, 0.15);
+            color: #a78bfa;
+        }
+
+        .goal-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .priority-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .priority-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width 0.5s ease;
+        }
+
+        /* ── Agent Thoughts Feed ── */
+        .thoughts-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 420px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .thought-entry {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.78rem;
+            animation: fadeSlideIn 0.3s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .thought-time {
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            margin-bottom: 4px;
+        }
+
+        .thought-text {
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .thought-icon {
+            margin-right: 6px;
+        }
+
+        /* ── Sleep Status ── */
+        .sleep-status {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sleep-icon {
+            font-size: 1.6rem;
+        }
+
+        .sleep-info {
+            flex: 1;
+        }
+
+        .sleep-state {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .sleep-meta {
+            font-size: 0.74rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 0.85rem;
+        }
+
+        /* ── Connecting overlay ── */
+        #connecting {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 14, 26, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            flex-direction: column;
+            gap: 16px;
+            backdrop-filter: blur(4px);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #connecting p {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="connecting">
+        <div class="spinner"></div>
+        <p>Connecting to agent...</p>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>🎯 <span>Autonomous</span> Goal Dashboard</h1>
+                <p>Real-time mission tracking · Ultimate AI Agent</p>
+            </div>
+            <div class="status-badge disconnected" id="statusBadge">
+                <div class="dot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card purple">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value" id="statActive">—</div>
+                <div class="stat-label">Active Goals</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="statCompleted">—</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card cyan">
+                <div class="stat-icon">🧬</div>
+                <div class="stat-value" id="statGenerated">—</div>
+                <div class="stat-label">Total Generated</div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="statLastExec">—</div>
+                <div class="stat-label">Last Execution</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+
+            <!-- Active Goals -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">🔥 Active Missions</span>
+                    <span id="goalCount" style="font-size:0.78rem;color:var(--muted);">0 goals</span>
+                </div>
+                <div class="panel-body">
+                    <div class="goal-list" id="goalList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💤</div>
+                            <p>No active goals yet — waiting for agent...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div style="display:flex;flex-direction:column;gap:20px;">
+
+                <!-- Agent Thoughts -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">🧠 Agent Thoughts</span>
+                        <span style="font-size:0.75rem;color:var(--muted);">live feed</span>
+                    </div>
+                    <div class="panel-body" style="padding:14px;">
+                        <div class="thoughts-feed" id="thoughtsFeed">
+                            <div class="thought-entry">
+                                <div class="thought-time">Waiting for connection...</div>
+                                <div class="thought-text">🔄 Establishing WebSocket connection to agent...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sleep Status -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">😴 Dream Engine</span>
+                    </div>
+                    <div class="panel-body" style="padding:14px;">
+                        <div class="sleep-status" id="sleepStatus">
+                            <div class="sleep-icon">☀️</div>
+                            <div class="sleep-info">
+                                <div class="sleep-state" id="sleepState">AWAKE</div>
+                                <div class="sleep-meta" id="sleepMeta">Loading dream engine status...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WS_URL = `ws://${location.host}/ws/goals`;
+        let ws = null;
+        let reconnectTimer = null;
+        const MAX_THOUGHTS = 50;
+        const thoughts = [];
+
+        const $ = id => document.getElementById(id);
+
+        function connect() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                $('connecting').style.display = 'none';
+                $('statusBadge').className = 'status-badge connected';
+                $('statusText').textContent = 'Live';
+                addThought('🔗', 'WebSocket connected — receiving live goal updates.');
+                if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+            };
+
+            ws.onmessage = e => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'goal_update') {
+                        updateStats(data.stats || {});
+                        updateGoals(data.active_goals || []);
+                        if (data.sleep) updateSleep(data.sleep);
+                    }
+                } catch (err) { }
+            };
+
+            ws.onclose = () => {
+                $('statusBadge').className = 'status-badge disconnected';
+                $('statusText').textContent = 'Disconnected';
+                addThought('⚠️', 'Connection lost — reconnecting in 3s...');
+                reconnectTimer = setTimeout(connect, 3000);
+            };
+
+            ws.onerror = () => ws.close();
+        }
+
+        function updateStats(s) {
+            $('statActive').textContent = s.active_goals ?? '—';
+            $('statCompleted').textContent = s.completed_goals ?? '—';
+            $('statGenerated').textContent = s.total_generated ?? '—';
+            const lastExec = s.last_execution;
+            if (lastExec) {
+                const ago = Math.round((Date.now() / 1000 - lastExec));
+                $('statLastExec').textContent = ago < 60 ? `${ago}s` : ago < 3600 ? `${Math.round(ago / 60)}m` : `${(ago / 3600).toFixed(1)}h`;
+            }
+        }
+
+        function updateGoals(goals) {
+            const list = $('goalList');
+            $('goalCount').textContent = `${goals.length} goal${goals.length !== 1 ? 's' : ''}`;
+
+            if (goals.length === 0) {
+                list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🌱</div><p>No active goals right now. Agent may be sleeping or generating new goals.</p></div>`;
+                return;
+            }
+
+            list.innerHTML = goals.map(g => {
+                const cat = (g.category || 'general').replace(/[^a-z_]/gi, '');
+                const prio = Math.min(10, Math.max(1, g.priority || 5));
+                const pct = (prio / 10 * 100).toFixed(0);
+                return `
+        <div class="goal-card cat-${cat}">
+          <div class="goal-header">
+            <div class="goal-title">${escHtml(g.title || 'Untitled')}</div>
+            <span class="goal-badge badge-${cat}">${cat}</span>
+          </div>
+          <div class="goal-meta">
+            <span>Priority ${prio}/10</span>
+            <span>·</span>
+            <span>${escHtml(g.status || 'active')}</span>
+          </div>
+          <div class="priority-bar">
+            <div class="priority-fill" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+            }).join('');
+        }
+
+        function updateSleep(s) {
+            const icons = { AWAKE: '☀️', LIGHT_SLEEP: '🌙', REM_SLEEP: '💤' };
+            $('sleepStatus').querySelector('.sleep-icon').textContent = icons[s.state] || '❓';
+            $('sleepState').textContent = s.state;
+            $('sleepMeta').textContent = `Idle: ${s.idle_duration || '0s'} · Cycles: ${s.sleep_cycles_completed || 0} · Wisdom: ${s.wisdom_vault_size || 0} rules`;
+        }
+
+        function addThought(icon, text) {
+            const feed = $('thoughtsFeed');
+            const now = new Date().toLocaleTimeString();
+            const el = document.createElement('div');
+            el.className = 'thought-entry';
+            el.innerHTML = `<div class="thought-time">${now}</div><div class="thought-text"><span class="thought-icon">${icon}</span>${escHtml(text)}</div>`;
+            feed.insertBefore(el, feed.firstChild);
+            thoughts.unshift({ icon, text, time: now });
+            while (feed.children.length > MAX_THOUGHTS) feed.removeChild(feed.lastChild);
+        }
+
+        function escHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Add periodic thought injections based on stats changes
+        let lastActive = -1;
+        let lastCompleted = -1;
+        setInterval(() => {
+            const active = parseInt($('statActive').textContent) || 0;
+            const completed = parseInt($('statCompleted').textContent) || 0;
+            if (active !== lastActive && lastActive >= 0) {
+                if (active > lastActive) addThought('🎯', `New goal spawned! ${active} missions now active.`);
+                if (active < lastActive) addThought('⚡', `Goal resolved. ${active} missions remaining.`);
+            }
+            if (completed !== lastCompleted && lastCompleted >= 0 && completed > lastCompleted) {
+                addThought('✅', `Mission completed! Total completed: ${completed}.`);
+            }
+            lastActive = active;
+            lastCompleted = completed;
+        }, 2100);
+
+        connect();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,43 @@
+# ==============================================
+# Render Blueprint — Ultimate AI Agent
+# ==============================================
+# Deploy: Connect your GitHub repo on Render
+# and it will auto-detect this file.
+#
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: ultimate-ai-agent
+    runtime: docker
+    plan: free            # Change to "starter" ($7/mo) for no sleep
+    region: oregon        # or singapore, frankfurt, ohio
+    
+    # Health check
+    healthCheckPath: /
+    
+    # Environment variables
+    envVars:
+      - key: HEADLESS_MODE
+        value: "true"
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: API_PORT
+        value: "10000"          # Render uses port 10000
+      - key: AGENT_PROVIDER
+        value: "openai"         # Use OpenAI-compatible API (supports Groq, SambaNova, etc.)
+      - key: AGENT_API_KEY
+        generateValue: true     # Render generates a random secret
+      - key: OPENAI_API_KEY
+        sync: false             # Set manually in Render dashboard
+      - key: OPENAI_BASE_URL
+        sync: false             # e.g. https://api.groq.com/openai/v1
+      - key: OPENAI_MODEL
+        sync: false             # e.g. llama-3.3-70b-versatile
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OLLAMA_HOST
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.7"
+

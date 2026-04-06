@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 The Matrix — Multi-Agent Voxel World</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --neon-blue: #00f5ff;
+            --neon-purple: #b000ff;
+            --neon-green: #00ff88;
+            --neon-orange: #ff8800;
+            --dark-bg: #020209;
+            --card-bg: rgba(5, 5, 25, 0.95);
+            --border: rgba(0, 245, 255, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: #dde;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(90deg, rgba(5, 5, 30, 0.98), rgba(15, 5, 40, 0.98));
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 24px;
+            margin-left: auto;
+        }
+
+        .hstat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .hstat .val {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--neon-blue);
+        }
+
+        .hstat .lbl {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .ws-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
+            border: 1px solid;
+        }
+
+        .ws-status.connected {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        .ws-status.disconnected {
+            background: rgba(255, 50, 50, 0.1);
+            border-color: #ff5050;
+            color: #ff5050;
+        }
+
+        /* MAIN LAYOUT */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 3D CANVAS */
+        #canvas-container {
+            position: relative;
+            overflow: hidden;
+            background: var(--dark-bg);
+        }
+
+        #worldCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .ctrl-btn {
+            background: rgba(0, 245, 255, 0.08);
+            border: 1px solid var(--border);
+            color: var(--neon-blue);
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        .ctrl-btn:hover {
+            background: rgba(0, 245, 255, 0.15);
+        }
+
+        .tick-display {
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.78rem;
+            color: rgba(0, 245, 255, 0.6);
+            letter-spacing: 1px;
+        }
+
+        /* SIDE PANEL */
+        .side-panel {
+            background: var(--card-bg);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* AGENT LIST */
+        .agent-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 245, 255, 0.2) transparent;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.65rem;
+            color: rgba(0, 245, 255, 0.5);
+            letter-spacing: 2px;
+            padding: 10px 12px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .agent-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .agent-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(0, 245, 255, 0.2);
+        }
+
+        .agent-card.selected {
+            border-left-color: var(--neon-blue);
+            background: rgba(0, 245, 255, 0.05);
+        }
+
+        .agent-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .agent-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 0.82rem;
+        }
+
+        .agent-pos {
+            margin-left: auto;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: 'Orbitron', monospace;
+        }
+
+        .resource-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .res-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.65rem;
+        }
+
+        .res-bar .res-label {
+            color: rgba(255, 255, 255, 0.4);
+            width: 14px;
+        }
+
+        .res-bar .bar-track {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .res-bar .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .res-bar .bar-fill.food {
+            background: var(--neon-green);
+        }
+
+        .res-bar .bar-fill.compute {
+            background: var(--neon-blue);
+        }
+
+        .res-bar .bar-fill.energy {
+            background: var(--neon-orange);
+        }
+
+        .res-bar .res-val {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.3);
+            width: 28px;
+            text-align: right;
+        }
+
+        /* CHAT LOG */
+        .chat-section {
+            height: 200px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .chat-log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+            font-size: 0.71rem;
+            line-height: 1.5;
+            color: rgba(200, 200, 255, 0.7);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 245, 255, 0.1) transparent;
+        }
+
+        .chat-log .entry {
+            margin-bottom: 4px;
+            animation: slide-in 0.3s ease-out;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            padding-bottom: 3px;
+        }
+
+        @keyframes slide-in {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>🌍</div>
+        <div class="title">THE MATRIX</div>
+        <div style="font-size:0.7rem; color:rgba(255,255,255,0.3);">Multi-Agent Voxel Society</div>
+        <div class="header-stats">
+            <div class="hstat">
+                <div class="val" id="tickCount">0</div>
+                <div class="lbl">Ticks</div>
+            </div>
+            <div class="hstat">
+                <div class="val" id="agentCount">15</div>
+                <div class="lbl">Agents</div>
+            </div>
+            <div class="hstat">
+                <div class="val" id="structCount">0</div>
+                <div class="lbl">Structures</div>
+            </div>
+            <div class="hstat">
+                <div class="val" id="tradeCount">0</div>
+                <div class="lbl">Trades</div>
+            </div>
+        </div>
+        <span class="ws-status disconnected" id="wsStatus">NO SERVER</span>
+    </header>
+
+    <div class="main">
+        <!-- 3D CANVAS -->
+        <div id="canvas-container">
+            <canvas id="worldCanvas"></canvas>
+            <div class="tick-display" id="tickDisplay">⏱ TICK 0 | 20×20 GRID</div>
+            <div class="canvas-overlay">
+                <button class="ctrl-btn" onclick="resetCamera()">🎥 RESET CAM</button>
+                <button class="ctrl-btn" onclick="toggleTopView()">🔝 TOP VIEW</button>
+                <button class="ctrl-btn" onclick="toggleAutoRotate()">🔄 AUTO ROTATE</button>
+            </div>
+        </div>
+
+        <!-- SIDE PANEL -->
+        <div class="side-panel">
+            <div class="section-title">🤖 Agent Roster</div>
+            <div class="agent-list" id="agentList"></div>
+            <div class="chat-section">
+                <div class="section-title">💬 World Chat</div>
+                <div class="chat-log" id="chatLog"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ──────────────────────────────────────────────────────────
+        //  THREE.JS SCENE SETUP
+        // ──────────────────────────────────────────────────────────
+        const container = document.getElementById('canvas-container');
+        const canvas = document.getElementById('worldCanvas');
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020209);
+        scene.fog = new THREE.FogExp2(0x020209, 0.025);
+
+        const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 500);
+        camera.position.set(15, 18, 22);
+        camera.lookAt(10, 0, 10);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x334466, 0.8);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0x00f5ff, 1.2);
+        dirLight.position.set(20, 30, 20);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+
+        const pointLight1 = new THREE.PointLight(0xb000ff, 2, 40);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0x00ff88, 1.5, 30);
+        pointLight2.position.set(5, 8, 15);
+        scene.add(pointLight2);
+
+        // Grid ground
+        const gridHelper = new THREE.GridHelper(20, 20, 0x113355, 0x0a1a2a);
+        gridHelper.position.set(10, -0.5, 10);
+        scene.add(gridHelper);
+
+        // Ground plane
+        const groundGeo = new THREE.PlaneGeometry(20, 20);
+        const groundMat = new THREE.MeshLambertMaterial({ color: 0x05050f, transparent: true, opacity: 0.95 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.set(10, -0.5, 10);
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // ──────────────────────────────────────────────────────────
+        //  AGENT MESHES
+        // ──────────────────────────────────────────────────────────
+        const agentMeshes = {};
+        const agentLabels = {};
+        const structureMeshes = {};
+
+        function createAgentMesh(agent) {
+            const geo = new THREE.BoxGeometry(0.7, 0.9, 0.7);
+            const mat = new THREE.MeshPhongMaterial({
+                color: new THREE.Color(agent.color),
+                emissive: new THREE.Color(agent.color),
+                emissiveIntensity: 0.3,
+                shininess: 80
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true;
+            mesh.position.set(agent.x + 0.5, 0.1, agent.y + 0.5);
+            mesh.userData = { agentName: agent.name, originalY: 0.1 };
+
+            // Glow sphere
+            const glowGeo = new THREE.SphereGeometry(0.5, 8, 8);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: new THREE.Color(agent.color),
+                transparent: true,
+                opacity: 0.08,
+                wireframe: true
+            });
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            mesh.add(glow);
+
+            scene.add(mesh);
+            agentMeshes[agent.name] = mesh;
+            return mesh;
+        }
+
+        function createStructureMesh(structure) {
+            const key = `${structure.x}_${structure.y}`;
+            if (structureMeshes[key]) return; // Already exists
+            const geo = new THREE.BoxGeometry(0.8, 1.5, 0.8);
+            const mat = new THREE.MeshPhongMaterial({
+                color: 0x224466,
+                emissive: 0x112233,
+                emissiveIntensity: 0.4,
+                transparent: true,
+                opacity: 0.85
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true;
+            mesh.position.set((structure.x || 0) + 0.5, 0.6, (structure.y || 0) + 0.5);
+            scene.add(mesh);
+            structureMeshes[key] = mesh;
+        }
+
+        // ──────────────────────────────────────────────────────────
+        //  CAMERA CONTROLS
+        // ──────────────────────────────────────────────────────────
+        let autoRotate = false;
+        let topView = false;
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+        let spherical = { radius: 28, theta: 0.8, phi: 0.9 };
+
+        function updateCameraFromSpherical() {
+            camera.position.set(
+                10 + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta),
+                spherical.radius * Math.cos(spherical.phi),
+                10 + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta)
+            );
+            camera.lookAt(10, 0, 10);
+        }
+
+        canvas.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+        canvas.addEventListener('mouseup', () => { isDragging = false; });
+        canvas.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            const dx = e.clientX - prevMouse.x;
+            const dy = e.clientY - prevMouse.y;
+            spherical.theta -= dx * 0.008;
+            spherical.phi = Math.max(0.2, Math.min(Math.PI / 2, spherical.phi + dy * 0.008));
+            prevMouse = { x: e.clientX, y: e.clientY };
+            updateCameraFromSpherical();
+        });
+        canvas.addEventListener('wheel', e => {
+            spherical.radius = Math.max(8, Math.min(60, spherical.radius + e.deltaY * 0.04));
+            updateCameraFromSpherical();
+        });
+
+        function resetCamera() {
+            spherical = { radius: 28, theta: 0.8, phi: 0.9 };
+            autoRotate = false;
+            topView = false;
+            updateCameraFromSpherical();
+        }
+
+        function toggleTopView() {
+            topView = !topView;
+            if (topView) {
+                camera.position.set(10, 35, 10);
+                camera.lookAt(10, 0, 10);
+            } else {
+                updateCameraFromSpherical();
+            }
+        }
+
+        function toggleAutoRotate() {
+            autoRotate = !autoRotate;
+        }
+
+        // ──────────────────────────────────────────────────────────
+        //  RESIZE
+        // ──────────────────────────────────────────────────────────
+        function onResize() {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            renderer.setSize(w, h);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        }
+        new ResizeObserver(onResize).observe(container);
+        onResize();
+
+        // ──────────────────────────────────────────────────────────
+        //  WORLD STATE UPDATE
+        // ──────────────────────────────────────────────────────────
+        let currentAgents = [];
+
+        function updateWorld(data) {
+            const agents = data.agents || [];
+            const chat = data.chat_log || [];
+            const structures = data.structures || [];
+            const stats = data.stats || {};
+            const tick = data.tick || 0;
+
+            // Update header stats
+            document.getElementById('tickCount').textContent = tick;
+            document.getElementById('agentCount').textContent = agents.length;
+            document.getElementById('structCount').textContent = stats.total_structures || 0;
+            document.getElementById('tradeCount').textContent = stats.total_trades || 0;
+            document.getElementById('tickDisplay').textContent = `⏱ TICK ${tick} | 20×20 GRID`;
+
+            currentAgents = agents;
+
+            // Update 3D meshes
+            agents.forEach(agent => {
+                if (!agentMeshes[agent.name]) {
+                    createAgentMesh(agent);
+                }
+                const mesh = agentMeshes[agent.name];
+                // Smooth position transition
+                const targetX = agent.x + 0.5;
+                const targetZ = agent.y + 0.5;
+                mesh.position.x += (targetX - mesh.position.x) * 0.3;
+                mesh.position.z += (targetZ - mesh.position.z) * 0.3;
+                // Hover animation
+                mesh.position.y = mesh.userData.originalY + Math.sin(Date.now() * 0.002 + agent.x) * 0.08;
+            });
+
+            // Structures
+            structures.forEach(s => createStructureMesh(s));
+
+            // Update sidebar agent list
+            updateAgentList(agents);
+
+            // Update chat
+            updateChatLog(chat);
+        }
+
+        function updateAgentList(agents) {
+            const container = document.getElementById('agentList');
+            agents.forEach(agent => {
+                let card = document.getElementById(`agent-card-${agent.name}`);
+                if (!card) {
+                    card = document.createElement('div');
+                    card.className = 'agent-card';
+                    card.id = `agent-card-${agent.name}`;
+                    card.innerHTML = `
+        <div class="agent-card-header">
+          <div class="agent-dot" style="background:${agent.color};box-shadow:0 0 6px ${agent.color}"></div>
+          <span class="agent-name">${agent.emoji} ${agent.name}</span>
+          <span class="agent-pos" id="pos-${agent.name}">(${agent.x},${agent.y})</span>
+        </div>
+        <div class="resource-bars">
+          <div class="res-bar">
+            <span class="res-label">🌾</span>
+            <div class="bar-track"><div class="bar-fill food" id="food-${agent.name}" style="width:${agent.food}%"></div></div>
+            <span class="res-val" id="food-val-${agent.name}">${Math.round(agent.food)}</span>
+          </div>
+          <div class="res-bar">
+            <span class="res-label">💾</span>
+            <div class="bar-track"><div class="bar-fill compute" id="compute-${agent.name}" style="width:${agent.compute}%"></div></div>
+            <span class="res-val" id="compute-val-${agent.name}">${Math.round(agent.compute)}</span>
+          </div>
+          <div class="res-bar">
+            <span class="res-label">⚡</span>
+            <div class="bar-track"><div class="bar-fill energy" id="energy-${agent.name}" style="width:${agent.energy}%"></div></div>
+            <span class="res-val" id="energy-val-${agent.name}">${Math.round(agent.energy)}</span>
+          </div>
+        </div>`;
+                    card.addEventListener('click', () => focusAgent(agent.name));
+                    container.appendChild(card);
+                } else {
+                    // Update values
+                    const foodEl = document.getElementById(`food-${agent.name}`);
+                    const computeEl = document.getElementById(`compute-${agent.name}`);
+                    const energyEl = document.getElementById(`energy-${agent.name}`);
+                    const posEl = document.getElementById(`pos-${agent.name}`);
+                    if (foodEl) { foodEl.style.width = `${agent.food}%`; document.getElementById(`food-val-${agent.name}`).textContent = Math.round(agent.food); }
+                    if (computeEl) { computeEl.style.width = `${agent.compute}%`; document.getElementById(`compute-val-${agent.name}`).textContent = Math.round(agent.compute); }
+                    if (energyEl) { energyEl.style.width = `${agent.energy}%`; document.getElementById(`energy-val-${agent.name}`).textContent = Math.round(agent.energy); }
+                    if (posEl) posEl.textContent = `(${agent.x},${agent.y})`;
+                }
+            });
+        }
+
+        let lastChatLength = 0;
+        function updateChatLog(messages) {
+            if (messages.length === lastChatLength) return;
+            const log = document.getElementById('chatLog');
+            const newMsgs = messages.slice(lastChatLength);
+            newMsgs.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'entry';
+                div.textContent = msg;
+                log.appendChild(div);
+            });
+            while (log.children.length > 100) log.removeChild(log.firstChild);
+            log.scrollTop = log.scrollHeight;
+            lastChatLength = messages.length;
+        }
+
+        function focusAgent(name) {
+            const mesh = agentMeshes[name];
+            if (!mesh) return;
+            spherical = {
+                radius: 12,
+                theta: Math.atan2(mesh.position.x - 10, mesh.position.z - 10),
+                phi: 0.7
+            };
+            updateCameraFromSpherical();
+            document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+            const card = document.getElementById(`agent-card-${name}`);
+            if (card) card.classList.add('selected');
+        }
+
+        // ──────────────────────────────────────────────────────────
+        //  WEBSOCKET CONNECTION
+        // ──────────────────────────────────────────────────────────
+        let ws = null;
+        let wsReconnectTimer = null;
+
+        function connectWS() {
+            try {
+                ws = new WebSocket('ws://localhost:8765');
+                ws.onopen = () => {
+                    document.getElementById('wsStatus').textContent = '● LIVE';
+                    document.getElementById('wsStatus').className = 'ws-status connected';
+                    console.log('Connected to VoxelServer');
+                };
+                ws.onmessage = e => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        updateWorld(data);
+                    } catch (err) { console.error('Parse error:', err); }
+                };
+                ws.onclose = () => {
+                    document.getElementById('wsStatus').textContent = 'OFFLINE';
+                    document.getElementById('wsStatus').className = 'ws-status disconnected';
+                    wsReconnectTimer = setTimeout(connectWS, 3000);
+                };
+                ws.onerror = () => {
+                    ws.close();
+                };
+            } catch (e) {
+                document.getElementById('wsStatus').textContent = 'NO SERVER';
+                wsReconnectTimer = setTimeout(connectWS, 5000);
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────
+        //  DEMO MODE (no server — shows simulation locally)
+        // ──────────────────────────────────────────────────────────
+        const DEMO_AGENTS = [
+            { name: "Alpha", emoji: "👑", color: "#ff4444", x: 2, y: 3, food: 80, compute: 60, energy: 90, structures_built: 5, trades_made: 1 },
+            { name: "Beta", emoji: "🛡️", color: "#4488ff", x: 15, y: 8, food: 70, compute: 80, energy: 75, structures_built: 3, trades_made: 4 },
+            { name: "Gamma", emoji: "🤝", color: "#44ff88", x: 10, y: 10, food: 60, compute: 55, energy: 85, structures_built: 2, trades_made: 12 },
+            { name: "Delta", emoji: "💥", color: "#ff8800", x: 5, y: 18, food: 45, compute: 40, energy: 70, structures_built: 0, trades_made: 0 },
+            { name: "Epsilon", emoji: "🏗️", color: "#aa44ff", x: 18, y: 2, food: 50, compute: 90, energy: 60, structures_built: 15, trades_made: 3 },
+            { name: "Zeta", emoji: "🔭", color: "#ffff44", x: 1, y: 12, food: 65, compute: 50, energy: 80, structures_built: 1, trades_made: 2 },
+            { name: "Eta", emoji: "💰", color: "#ff44cc", x: 8, y: 5, food: 75, compute: 65, energy: 70, structures_built: 2, trades_made: 18 },
+            { name: "Theta", emoji: "✊", color: "#44ffff", x: 12, y: 16, food: 55, compute: 45, energy: 65, structures_built: 0, trades_made: 1 },
+            { name: "Iota", emoji: "🧙", color: "#888888", x: 19, y: 19, food: 85, compute: 70, energy: 95, structures_built: 8, trades_made: 0 },
+            { name: "Kappa", emoji: "🔬", color: "#88ff44", x: 7, y: 14, food: 60, compute: 85, energy: 72, structures_built: 4, trades_made: 5 },
+            { name: "Lambda", emoji: "🧘", color: "#ff88ff", x: 10, y: 1, food: 50, compute: 50, energy: 100, structures_built: 0, trades_made: 0 },
+            { name: "Mu", emoji: "⚔️", color: "#ff2222", x: 3, y: 7, food: 70, compute: 55, energy: 80, structures_built: 2, trades_made: 0 },
+            { name: "Nu", emoji: "🎨", color: "#ffaa22", x: 16, y: 14, food: 55, compute: 60, energy: 65, structures_built: 20, trades_made: 0 },
+            { name: "Xi", emoji: "🌾", color: "#22ff88", x: 11, y: 8, food: 95, compute: 40, energy: 75, structures_built: 3, trades_made: 8 },
+            { name: "Omicron", emoji: "🕵️", color: "#aaaaff", x: 6, y: 11, food: 60, compute: 75, energy: 70, structures_built: 1, trades_made: 2 },
+        ];
+
+        let demoTick = 0;
+
+        function demoChatLog() {
+            return [
+                "👑 Alpha: Fortifying eastern perimeter. Resources secured.",
+                "💥 Delta: Chaos. Pure, beautiful chaos.",
+                "🤝 Gamma: Proposing a peace accord between Alpha and Delta.",
+                "🏗️ Epsilon: Structure #15 complete! Moving to sector D.",
+                "💰 Eta: Trade offer: 10 food for 8 compute. Any takers?",
+                "🧙 Iota: The others are fools. Solitude is strength.",
+                "🔬 Kappa: Hypothesis: Agents with high compute build more structures. Confirming...",
+                "🌾 Xi: Sharing surplus crops with Theta. Solidarity!",
+                "🕵️ Omicron: *observes silently*",
+                "🧘 Lambda: What is a resource, but an illusion of scarcity?",
+            ];
+        }
+
+        function tickDemo() {
+            demoTick++;
+            // Animate agents
+            DEMO_AGENTS.forEach(a => {
+                a.x = Math.max(0, Math.min(19, a.x + (Math.random() > 0.7 ? (Math.random() > 0.5 ? 1 : -1) : 0)));
+                a.y = Math.max(0, Math.min(19, a.y + (Math.random() > 0.7 ? (Math.random() > 0.5 ? 1 : -1) : 0)));
+                a.food = Math.max(10, Math.min(100, a.food + (Math.random() * 4 - 2)));
+                a.compute = Math.max(10, Math.min(100, a.compute + (Math.random() * 3 - 1)));
+                a.energy = Math.max(10, Math.min(100, a.energy + (Math.random() * 4 - 2)));
+            });
+
+            const demoState = {
+                tick: demoTick,
+                agents: DEMO_AGENTS,
+                chat_log: demoChatLog(),
+                structures: [{ x: 18, y: 2 }, { x: 18, y: 3 }, { x: 17, y: 2 }, { x: 10, y: 10 }, { x: 9, y: 10 }, { x: 16, y: 14 }].map((s, i) => ({ ...s, type: 'structure', owner: 'Epsilon', name: `S${i}` })),
+                stats: { total_structures: 63, total_trades: 54, richest_agent: "Xi", most_structures: "Nu" }
+            };
+            updateWorld(demoState);
+        }
+
+        // Start demo mode if no WS
+        setTimeout(() => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                setInterval(tickDemo, 1800);
+                tickDemo();
+                document.getElementById('wsStatus').textContent = 'DEMO';
+                document.getElementById('wsStatus').style.cssText += '; border-color: #ffaa00; color: #ffaa00; background: rgba(255,170,0,0.1);';
+            }
+        }, 3000);
+
+        // ──────────────────────────────────────────────────────────
+        //  ANIMATION LOOP
+        // ──────────────────────────────────────────────────────────
+        let frame = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            frame++;
+
+            if (autoRotate && !topView) {
+                spherical.theta += 0.003;
+                updateCameraFromSpherical();
+            }
+
+            // Animate agent meshes
+            Object.values(agentMeshes).forEach((mesh, i) => {
+                mesh.position.y = mesh.userData.originalY + Math.sin(frame * 0.02 + i) * 0.06;
+                mesh.rotation.y += 0.01;
+            });
+
+            // Light animation
+            pointLight1.position.x = 10 + Math.sin(frame * 0.005) * 8;
+            pointLight1.position.z = 10 + Math.cos(frame * 0.005) * 8;
+
+            renderer.render(scene, camera);
+        }
+
+        // ──────────────────────────────────────────────────────────
+        //  INIT
+        // ──────────────────────────────────────────────────────────
+        updateCameraFromSpherical();
+        connectWS();
+        animate();
+    </script>
+</body>
+
+</html>

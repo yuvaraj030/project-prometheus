@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Agent - Neural Mind Palace</title>
+    <!-- 3D Force-Directed Graph -->
+    <script src="https://unpkg.com/3d-force-graph"></script>
+    <!-- Three.js -->
+    <script src="https://unpkg.com/three"></script>
+    <!-- Post-Processing for Glowing Bloom Effect -->
+    <script src="https://unpkg.com/three/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://unpkg.com/three/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/three/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://unpkg.com/three/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            overflow: hidden;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: #e2e8f0;
+        }
+
+        #3d-graph {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #hud {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+            color: #38bdf8;
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        p {
+            margin: 8px 0 0 0;
+            font-size: 14px;
+            color: #94a3b8;
+            letter-spacing: 1px;
+        }
+
+        #node-details {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 320px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(56, 189, 248, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .meta-tag {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: #7dd3fc;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        #nd-title {
+            margin-top: 0;
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        #nd-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #nd-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #nd-content::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.5);
+            border-radius: 4px;
+        }
+
+        .pulse-dot {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 10px;
+            height: 10px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="hud">
+        <h1>Hive Mind</h1>
+        <p>Real-time Vector Topology & Synaptic Mapping</p>
+    </div>
+
+    <div class="pulse-dot" title="Live Synaptic Connection"></div>
+
+    <div id="node-details">
+        <h3 id="nd-title">Node ID</h3>
+        <div id="nd-content">...</div>
+        <div id="nd-category" class="meta-tag">Memory Fragment</div>
+    </div>
+
+    <div id="3d-graph"></div>
+
+    <script>
+        const API_URL = '/api/mind_palace_data';
+
+        const elem = document.getElementById('3d-graph');
+
+        const Graph = ForceGraph3D()(elem)
+            .backgroundColor('rgba(0,0,0,0)')
+            .nodeLabel('label')
+            .nodeAutoColorBy('group')
+            .nodeRelSize(6)
+            .linkWidth(1.5)
+            .linkDirectionalParticles(2)
+            .linkDirectionalParticleWidth(2.5)
+            .linkOpacity(0.4)
+            .linkColor(() => 'rgba(56, 189, 248, 0.4)')
+            .onNodeHover(node => {
+                elem.style.cursor = node ? 'pointer' : null;
+            })
+            .onNodeClick(node => {
+                const distance = 60;
+                const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
+
+                Graph.cameraPosition(
+                    { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio },
+                    node,
+                    2000
+                );
+
+                const details = document.getElementById('node-details');
+                document.getElementById('nd-title').textContent = node.id ? node.id.substring(0, 18) + '...' : 'Synapse';
+                document.getElementById('nd-content').textContent = node.full_text || 'Abstract Concept';
+                document.getElementById('nd-category').textContent = String(node.group || 'Neural').toUpperCase();
+
+                details.style.display = 'block';
+                details.style.opacity = '0';
+                setTimeout(() => details.style.opacity = '1', 50);
+            })
+            .onBackgroundClick(() => {
+                const details = document.getElementById('node-details');
+                details.style.opacity = '0';
+                setTimeout(() => details.style.display = 'none', 300);
+            });
+
+        // Add Post-Processing (Bloom)
+        const bloomPass = new THREE.UnrealBloomPass();
+        bloomPass.strength = 1.5;
+        bloomPass.radius = 1.0;
+        bloomPass.threshold = 0.1;
+        Graph.postProcessingComposer().addPass(bloomPass);
+
+        // Fetch Data
+        async function loadData() {
+            try {
+                // If the endpoint fails during testing, inject dummy data for visual testing
+                let data;
+                try {
+                    const res = await fetch(API_URL);
+                    data = await res.json();
+                } catch (e) {
+                    // Mock data generator for visual testing if API is unavailable locally
+                    console.log("Using generative mock data for visualization.");
+                    const N = 80;
+                    const nodes = [...Array(N).keys()].map(i => ({ id: i, group: i % 5, full_text: 'Simulated memory fragment ' + i }));
+                    const links = [...Array(N).keys()].filter(id => id).map(id => ({
+                        source: id,
+                        target: Math.round(Math.random() * (id - 1))
+                    }));
+                    data = { nodes, links };
+                }
+
+                Graph.graphData(data);
+
+                // Add pulsing animation to nodes
+                let time = 0;
+                setInterval(() => {
+                    time += 0.1;
+                    Graph.nodeColor(node => {
+                        const baseColor = new THREE.Color(Graph.nodeAutoColorBy()(node));
+                        const pulse = (Math.sin(time + node.id) + 1) / 2;
+                        return baseColor.lerp(new THREE.Color('#ffffff'), pulse * 0.3).getStyle();
+                    });
+                }, 50);
+
+            } catch (err) {
+                console.error("Failed to load mind palace data", err);
+            }
+        }
+
+        loadData();
+
+        // Slow camera orbit
+        let angle = 0;
+        setInterval(() => {
+            const camPos = Graph.cameraPosition();
+            if (camPos) {
+                const radius = Math.sqrt(camPos.x * camPos.x + camPos.z * camPos.z);
+                Graph.cameraPosition({
+                    x: radius * Math.sin(angle),
+                    z: radius * Math.cos(angle)
+                });
+                angle += Math.PI / 3000;
+            }
+        }, 30);
+
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            Graph.width(window.innerWidth).height(window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,77 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Secrets & credentials
+.env
+.agent_keyfile
+*_credentials.json
+*_keyfile*
+
+# Databases & persisted state
+*.db
+*.sqlite
+*.sqlite3
+rsi_ledger.json
+dream_wisdom.json
+*_memory.json
+freelance_state.json
+code_integrity_ledger.json
+ultimate_agent_memory.json
+
+# Logs & temp
+logs/
+*.log
+*.tmp
+*.orig
+report.txt
+replacements.txt
+test_write.txt
+ping_test.txt
+
+# Data directories (user data, not source)
+memory/
+recovery/
+agent_backups/
+agent_vector_db/
+screenshots/
+saas_output/
+youtube_output/
+temp_ui/
+site/
+dream_images/
+benchmarks/results/
+wordlists/
+
+# Large binaries
+*.exe
+*.dll
+*.so
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test scaffolding
+test_pwa_app/
+test_scaffold/

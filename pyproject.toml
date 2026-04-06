@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexa-lang"
+version = "28.0.0"
+description = "Nexa v0.2 — The AI-native programming language. Enforced let immutability, gated sys.execute(), clean AST, unlimited loops."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+  {name = "Yuvaraj", email = "yuvaraj@nexa-lang.dev"}
+]
+keywords = [
+  "programming-language", "ai", "machine-learning", "compiler",
+  "interpreter", "static-typing", "null-safety", "nexa"
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Software Development :: Compilers",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev   = ["pytest", "black", "mypy"]
+llvm  = ["llvmlite>=0.42"]
+wasm  = ["pyodide-build"]
+
+[project.urls]
+Homepage      = "https://nexa-lang.dev"
+Documentation = "https://docs.nexa-lang.dev"
+Repository    = "https://github.com/yuvaraj030/nexa-lang"
+Registry      = "https://registry.nexa-lang.dev"
+Discord       = "https://discord.gg/nexa-lang"
+Issues        = "https://github.com/yuvaraj030/nexa-lang/issues"
+
+[project.scripts]
+nexa = "nexa_lang.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nexa_lang*"]
+
+[tool.setuptools.package-data]
+"nexa_lang" = [
+  "templates/**/*",
+  "stdlib/**/*",
+  "nexa_vm.c",
+  "*.so", "*.dll", "*.dylib"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311"]
