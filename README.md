@@ -180,9 +180,6 @@ cp .env.example .env
 ```bash
 # Start the agent
 python ultimate_agent.py
-
-# Or run as a web server
-python gateway.py
 ```
 
 ---
