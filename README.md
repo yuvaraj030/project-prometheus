@@ -163,8 +163,8 @@ Scheduled nightly at 2 AM via daemon thread; pauses the goal engine during the c
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ultimate-ai-agent.git
-cd ultimate-ai-agent
+git clone https://github.com/yuvaraj030/project-prometheus.git
+cd project-prometheus
 
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
@@ -235,7 +235,7 @@ python run_all_tests.py
 | Database | SQLite + ChromaDB |
 | LLM providers | Gemini, Claude, GPT-4, Ollama |
 | Agent capabilities | 25+ tools |
-| Languages supported | Python, NexaLang (custom VM) |
+| Languages supported | Python |
 
 ---
 
