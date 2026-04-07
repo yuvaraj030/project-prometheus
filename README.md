@@ -252,16 +252,6 @@ These gaps are documented not as failures, but as the next frontier.
 
 ---
 
-## Roadmap
-
-See [ROADMAP.md](ROADMAP.md) for the full plan. Key upcoming work:
-
-- [ ] LoRA fine-tuning pipeline (actual weight updates from experience)
-- [ ] Formal program synthesis with Wasm test gate for RSI
-- [ ] Causal world knowledge graph (replacing flat vector DB)
-- [ ] Tool auto-discovery from OpenAPI specs
-- [ ] HTN multi-level planning (currently 1-level deep)
-
 ---
 
 ## Blog Posts
